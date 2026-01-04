@@ -22,9 +22,8 @@ blueprint:
       name: Cover
       description: The cover to control
       selector:
-        target:
-          entity:
-            domain: cover
+        entity:
+          domain: cover
 
 trigger:
   - platform: device
@@ -48,39 +47,41 @@ trigger:
 
 action:
   - variables:
-      cover_target: !input cover
+      cover_entity: !input cover
   - choose:
       - conditions:
           - condition: trigger
             id: open
         sequence:
           - if:
-              - condition: template
-                value_template: "{{ is_state((cover_target.entity_id | default([cover_target]))[0], 'opening') }}"
+              - condition: state
+                entity_id: !input cover
+                state: "opening"
             then:
               - service: cover.stop_cover
-                target: !input cover
+                entity_id: !input cover
             else:
               - service: cover.open_cover
-                target: !input cover
+                entity_id: !input cover
       - conditions:
           - condition: trigger
             id: close
         sequence:
           - if:
-              - condition: template
-                value_template: "{{ is_state((cover_target.entity_id | default([cover_target]))[0], 'closing') }}"
+              - condition: state
+                entity_id: !input cover
+                state: "closing"
             then:
               - service: cover.stop_cover
-                target: !input cover
+                entity_id: !input cover
             else:
               - service: cover.close_cover
-                target: !input cover
+                entity_id: !input cover
       - conditions:
           - condition: trigger
             id: stop
         sequence:
           - service: cover.stop_cover
-            target: !input cover
+            entity_id: !input cover
 
 mode: single
