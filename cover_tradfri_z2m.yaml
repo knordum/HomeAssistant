@@ -11,11 +11,13 @@ blueprint:
   domain: automation
   source_url: https://github.com/FriedCheese2006/HomeAssistant/blob/main/Ikea_button_z2m.yaml
   input:
-    remote_topic:
-      name: Remote MQTT Topic
-      description: "The Zigbee2MQTT topic for your remote (e.g., zigbee2mqtt/living_room_switch)"
+    remote:
+      name: Remote
+      description: "IKEA Tradfri open/close remote (E1766)"
       selector:
-        text:
+        device:
+          integration: mqtt
+          manufacturer: IKEA
     cover:
       name: Cover
       description: The cover to control
@@ -25,21 +27,36 @@ blueprint:
             domain: cover
 
 trigger:
-  - platform: mqtt
-    topic: !input remote_topic
-    value_template: "{{ value_json.action }}"
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: open
+    id: open
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: close
+    id: close
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: stop
+    id: stop
 
 action:
   - variables:
-      command: "{{ trigger.payload }}"
       cover_target: !input cover
   - choose:
       - conditions:
-          - "{{ command == 'open' }}"
+          - condition: trigger
+            id: open
         sequence:
           - if:
               - condition: template
-                value_template: "{{ is_state_attr((cover_target.entity_id | default([cover_target]))[0], 'moving', 'OPENING') or state_attr((cover_target.entity_id | default([cover_target]))[0], 'current_position') | int(-1) != -1 and is_state((cover_target.entity_id | default([cover_target]))[0], 'opening') }}"
+                value_template: "{{ is_state((cover_target.entity_id | default([cover_target]))[0], 'opening') }}"
             then:
               - service: cover.stop_cover
                 target: !input cover
@@ -47,11 +64,12 @@ action:
               - service: cover.open_cover
                 target: !input cover
       - conditions:
-          - "{{ command == 'close' }}"
+          - condition: trigger
+            id: close
         sequence:
           - if:
               - condition: template
-                value_template: "{{ is_state_attr((cover_target.entity_id | default([cover_target]))[0], 'moving', 'CLOSING') or state_attr((cover_target.entity_id | default([cover_target]))[0], 'current_position') | int(-1) != -1 and is_state((cover_target.entity_id | default([cover_target]))[0], 'closing') }}"
+                value_template: "{{ is_state((cover_target.entity_id | default([cover_target]))[0], 'closing') }}"
             then:
               - service: cover.stop_cover
                 target: !input cover
@@ -59,7 +77,8 @@ action:
               - service: cover.close_cover
                 target: !input cover
       - conditions:
-          - "{{ command in ['stop', 'stop_opening', 'stop_closing'] }}"
+          - condition: trigger
+            id: stop
         sequence:
           - service: cover.stop_cover
             target: !input cover
