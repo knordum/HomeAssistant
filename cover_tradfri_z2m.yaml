@@ -6,7 +6,10 @@ blueprint:
     Short press on ☼ button will open the cover (or stop if already opening).
     Short press on ☰ button will close the cover (or stop if already closing).
     Long press on ☼ or ☰ will stop the cover.
+
+    Inspired by: https://github.com/FriedCheese2006/HomeAssistant/blob/main/Ikea_button_z2m.yaml
   domain: automation
+  source_url: https://github.com/FriedCheese2006/HomeAssistant/blob/main/Ikea_button_z2m.yaml
   input:
     remote_topic:
       name: Remote MQTT Topic
