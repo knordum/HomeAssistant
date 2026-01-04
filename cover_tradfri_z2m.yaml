@@ -1,11 +1,11 @@
 blueprint:
   name: Cover control with Tradfri open/close remote (Zigbee2MQTT)
   description: |
-    Control a cover with an IKEA Tradfri open/close button remote over Zigbee2MQTT
+    Control one or more covers with an IKEA Tradfri open/close button remote over Zigbee2MQTT
 
-    Short press on ☼ button will open the cover (or stop if already opening).
-    Short press on ☰ button will close the cover (or stop if already closing).
-    Long press on ☼ or ☰ will stop the cover.
+    Short press on ☼ button will open the cover(s) (or stop if already opening).
+    Short press on ☰ button will close the cover(s) (or stop if already closing).
+    Long press on ☼ or ☰ will stop the cover(s).
 
     Inspired by: https://github.com/FriedCheese2006/HomeAssistant/blob/main/Ikea_button_z2m.yaml
   domain: automation
@@ -18,12 +18,13 @@ blueprint:
         device:
           integration: mqtt
           manufacturer: IKEA
-    cover:
-      name: Cover
-      description: The cover to control
+    covers:
+      name: Covers
+      description: The cover(s) to control
       selector:
         entity:
           domain: cover
+          multiple: true
 
 trigger:
   - platform: device
@@ -47,41 +48,28 @@ trigger:
 
 action:
   - variables:
-      cover_entity: !input cover
+      covers: !input covers
   - choose:
       - conditions:
           - condition: trigger
             id: open
         sequence:
-          - if:
-              - condition: state
-                entity_id: !input cover
-                state: "opening"
-            then:
-              - service: cover.stop_cover
-                entity_id: !input cover
-            else:
-              - service: cover.open_cover
-                entity_id: !input cover
+          - action: cover.open_cover
+            target:
+              entity_id: "{{ covers }}"
       - conditions:
           - condition: trigger
             id: close
         sequence:
-          - if:
-              - condition: state
-                entity_id: !input cover
-                state: "closing"
-            then:
-              - service: cover.stop_cover
-                entity_id: !input cover
-            else:
-              - service: cover.close_cover
-                entity_id: !input cover
+          - action: cover.close_cover
+            target:
+              entity_id: "{{ covers }}"
       - conditions:
           - condition: trigger
             id: stop
         sequence:
-          - service: cover.stop_cover
-            entity_id: !input cover
+          - action: cover.stop_cover
+            target:
+              entity_id: "{{ covers }}"
 
 mode: single
